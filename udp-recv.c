@@ -39,8 +39,28 @@ main(int argc, char **argv)
 		printf("waiting on port %d\n", SERVICE_PORT);
 		recvlen = recvfrom(fd, buf_recv, 1034, 0, (struct sockaddr *)&remaddr, &addrlen);
 		if (recvlen > 0) {
-			buf_recv[recvlen] = 0;
-			printf("received message: \"%s\" (%d bytes)\n", buf_recv, recvlen);
+			// CEK IS MESSAGE ERROR OR NOT
+			// if(!iserror)
+			int data_length = (buf_recv[5] << 24 ) | (buf_recv[6] << 16) | (buf_recv[7] << 8) | buf_recv[8];
+			char checksum = 0;
+			for(int i = 0; i < data_length+10; i++){
+				checksum +=  buf_recv[i];
+			}
+			printf("%x\n", checksum);
+			if(checksum == 0xffffffff){
+				printf("no error\n");
+			}else{
+				printf("error while transmit\n");
+			}
+
+			// PRINT THE DATA RECEIVED
+			
+			printf("received message (%d byte data): ", data_length);
+			for(int i = 0; i < data_length; i++){
+				printf("%c", buf_recv[9+i]);
+			}
+			printf("\n");
+			// printf("received message: \"%s\" (%d bytes)\n", buf_recv, recvlen);
 		}
 		else
 			printf("uh oh - something went wrong!\n");

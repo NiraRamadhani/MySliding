@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	struct sockaddr_in myaddr, remaddr;
 	int fd, slen=sizeof(remaddr);
 	int recvlen;		/* # bytes in acknowledgement message */
-	char *server = "10.18.103.9";	/* change this to use a different server */
+	char *server = "192.168.100.8";	/* change this to use a different server */
 
 	/* create a socket */
 	
@@ -64,13 +64,40 @@ int main(int argc, char **argv)
 		char* buf_send=(char*)malloc(1034);
 		// frame_to_raw(frm[i], buf_send);
 		// memset(buf_send, 0, sizeof(buf_send));
-		char str[100];
+		// SEND CUSTOM MESSAGE //
+		char str[1024];
+		printf("SEND MESSAGE : ");
 		gets(str);
-		sprintf(buf_send, str);
-
-		printf("%c \n", buf_send[1]);
-
-		// sprintf(buf_send, "AB");
+		// sprintf(buf_send, str);
+		// ================== //
+		// TEST SEND FRAME //
+		buf_send[0] = 0x1; //soh
+		int n = 0;
+		buf_send[1] = (n >> 24) & 0xFF;
+		buf_send[2] = (n >> 16) & 0xFF;
+		buf_send[3] = (n >> 8) & 0xFF;
+		buf_send[4] = n & 0xFF;
+		int data_length = strlen(str);
+		buf_send[5] = (data_length >> 24) & 0xFF;
+		buf_send[6] = (data_length >> 16) & 0xFF;
+		buf_send[7] = (data_length >> 8) & 0xFF;
+		buf_send[8] = data_length & 0xFF;
+		int cek = (buf_send[5] << 24 ) | (buf_send[6] << 16) | (buf_send[7] << 8) | buf_send[8];
+		printf("int: %d\n", cek);
+		for(int i = 0; i < data_length; i++){
+			buf_send[9+i] = str[i];
+		}
+		for(int i = 0; i < data_length; i++){
+			printf("%c", buf_send[9+i]);
+		}
+		printf("\n");
+		char checksum = 0;
+		for(int i = 0; i < 9+data_length; i++){
+			checksum += buf_send[i];
+		}
+		checksum = ~checksum;
+		buf_send[9+data_length] = checksum;
+		// SEND THE BUFFER //
 		if(sendto(fd, buf_send, 1034, 0, (struct sockaddr *)&remaddr, slen)==-1){
 			perror("sendto");
 			exit(1);

@@ -1,12 +1,3 @@
-/*
-        demo-udp-03: udp-recv: a simple udp server
-	receive udp messages
-
-        usage:  udp-recv
-
-        Paul Krzyzanowski
-*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,8 +6,6 @@
 #include <arpa/inet.h>
 #include "port.h"
 
-#define BUFSIZE 2048
-
 int
 main(int argc, char **argv)
 {
@@ -24,14 +13,9 @@ main(int argc, char **argv)
 	struct sockaddr_in remaddr;	/* remote address */
 	socklen_t addrlen = sizeof(remaddr);		/* length of addresses */
 	int recvlen;			/* # bytes received */
-	int fd;				/* our socket */
-	int msgcnt = 0;			/* count # of messages we received */
-	unsigned char buf[BUFSIZE];	/* receive buffer */
-	char str[100];
-	char* recv_buff;
 
 	/* create a UDP socket */
-
+	int fd;				/* our socket */
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket\n");
 		return 0;
@@ -50,21 +34,20 @@ main(int argc, char **argv)
 	}
 
 	/* now loop, receiving data and printing what we received */
+	char* buf_recv=(char*)malloc(1034);
 	for (;;) {
 		printf("waiting on port %d\n", SERVICE_PORT);
-		recvlen = recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &addrlen);
+		recvlen = recvfrom(fd, buf_recv, 1034, 0, (struct sockaddr *)&remaddr, &addrlen);
 		if (recvlen > 0) {
-			buf[recvlen] = 0;
-			printf("received message: \"%s\" (%d bytes)\n", buf, recvlen);
+			buf_recv[recvlen] = 0;
+			printf("received message: \"%s\" (%d bytes)\n", buf_recv, recvlen);
 		}
 		else
 			printf("uh oh - something went wrong!\n");
-		// gets(str);
-		// free(buf);
-		// sprintf(buf, "ack");
-		// sprintf(buf, str);
-		printf("sending response \"%s\"\n", buf);
-		// if (sendto(fd, buf, strlen(buf), 0, (struct sockaddr *)&remaddr, addrlen) < 0)
+		char* buf_send=(char*)malloc(6);
+		sprintf(buf_send, "ACK");
+		printf("sending response \"%s\"\n", buf_send);
+		if (sendto(fd, buf_send, 6, 0, (struct sockaddr *)&remaddr, addrlen) < 0)
 			perror("sendto");
 	}
 	/* never exits */

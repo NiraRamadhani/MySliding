@@ -1,14 +1,3 @@
-/*
-	demo-udp-03: udp-send: a simple udp client
-	send udp messages
-	This sends a sequence of messages (the # of messages is defined in MSGS)
-	The messages are sent to a port defined in SERVICE_PORT 
-
-	usage:  udp-send
-
-	Paul Krzyzanowski
-*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,20 +6,15 @@
 #include "port.h"
 #include "frame.h"
 
-#define BUFLEN 2048
-#define MSGS 5	/* number of messages to send */
-
-int main(void)
+int main(int argc, char **argv)
 {
 	struct sockaddr_in myaddr, remaddr;
-	int fd, i, slen=sizeof(remaddr);
-	char buf[BUFLEN];	/* message buffer */
+	int fd, slen=sizeof(remaddr);
 	int recvlen;		/* # bytes in acknowledgement message */
 	char *server = "10.18.103.9";	/* change this to use a different server */
-	// char str[100];
 
 	/* create a socket */
-
+	
 	if ((fd=socket(AF_INET, SOCK_DGRAM, 0))==-1)
 		printf("socket created\n");
 
@@ -72,44 +56,33 @@ int main(void)
 	// 	frm[frameNum] = create_frame(frameNum, buf);
 	// 	frameNum++;
 	// }
+
 	/* now let's send the messages */
 	for(int i = 0; i < 1; i++){
 		// printf("ini: %d\n", strlen(buf));
 		printf("Sending packet %d to %s port %d\n", i, server, SERVICE_PORT);
 		char* buf_send=(char*)malloc(1034);
 		// frame_to_raw(frm[i], buf_send);
-		memset(buf_send, 0, sizeof(buf_send));
-		sprintf(buf_send, "TEST SEND INI");
-		// printf("ini: %d\n", sizeof(buf_send));
-		printf("cek: %x", buf_send[0]);
+		// memset(buf_send, 0, sizeof(buf_send));
+		char str[100];
+		gets(str);
+		sprintf(buf_send, str);
+
+		printf("%c \n", buf_send[1]);
+
+		// sprintf(buf_send, "AB");
 		if(sendto(fd, buf_send, 1034, 0, (struct sockaddr *)&remaddr, slen)==-1){
 			perror("sendto");
 			exit(1);
 		}
 		/* now receive an acknowledgement from the server */
-		recvlen = recvfrom(fd, buf, BUFLEN, 0, (struct sockaddr *)&remaddr, &slen);
+		char* buf_recv=(char*)malloc(6);
+		recvlen = recvfrom(fd, buf_recv, 6, 0, (struct sockaddr *)&remaddr, &slen);
 		if (recvlen >= 0) {
-			buf[recvlen] = 0;	/* expect a printable string - terminate it */
-			printf("received message: \"%s\"\n", buf);
+			buf_recv[recvlen] = 0;	/* expect a printable string - terminate it */
+			printf("received message: \"%s\" (%d bytes)\n", buf_recv, recvlen);
 		}
 	}
-
-	// for (i=0; i < MSGS; i++) {
-	// 	printf("Sending packet %d to %s port %d\n", i, server, SERVICE_PORT);
-	// 	gets(str);
-	// 	sprintf(buf, str);
-	// 	printf("%s\n", buf);
-	// 	if (sendto(fd, buf, strlen(buf), 0, (struct sockaddr *)&remaddr, slen)==-1) {
-	// 		perror("sendto");
-	// 		exit(1);
-	// 	}
-	// 	/* now receive an acknowledgement from the server */
-	// 	recvlen = recvfrom(fd, buf, BUFLEN, 0, (struct sockaddr *)&remaddr, &slen);
-	// 	if (recvlen >= 0) {
-	// 		buf[recvlen] = 0;	/* expect a printable string - terminate it */
-	// 		printf("received message: \"%s\"\n", buf);
-	// 	}
-	// }
 	close(fd);
 	return 0;
 }
